@@ -1,0 +1,38 @@
+{
+    "builders": [{
+        "type"                : "amazon-ebs",
+        "access_key"          : "{{ user `aws_access_key` }}",
+        "secret_key"          : "{{ user `aws_secret_key` }}",
+        "token"               : "{{ user `token`}}",
+        "region"              : "{{ user `region` }}",
+        "instance_type"       : "{{ user `instance_type` }}",
+        "source_ami"          : "{{ user `source_ami` }}",
+        "ami_name"            : "packer-tester-{{timestamp}}",
+        "winrm_username"      : "{{ user `winrm_username_env`}}",
+        "user_data_file"      : "./scripts/bootstrap_win.txt",
+        "communicator"        : "winrm",
+        "subnet_id" :  "{{ user `subnet_id` }}",
+        "vpc_id" : "{{ user `vpc_id` }}"
+    }],
+    "provisioners": [
+        {
+            "type": "windows-restart"
+        },
+        {
+            "script": "./scripts/verify-files.ps1",
+            "type": "powershell"
+        },
+        {
+            "type": "file",
+            "source": "files",
+            "destination": "C:/packer-tester"
+        },
+        {
+            "type": "powershell",
+            "environment_vars": ["WEBSERVER_WINDOWS_USERNAME={{user `winrm_username_env`}}", "WEBSERVER_WINDOWS_PASSWORD={{ user `winrm_password_env`}}"],
+            "inline": [
+                "net user $Env:WEBSERVER_WINDOWS_USERNAME $Env:WEBSERVER_WINDOWS_PASSWORD"
+            ]
+        }
+    ] 
+}
